@@ -555,6 +555,8 @@ struct IslandPanelView: View {
                 VStack(spacing: 0) {
                     sessionPanelHeader(referenceDate: referenceDate)
 
+                    animatedUsageStatus
+
                     ScrollView(.vertical) {
                         sessionRowsContent(referenceDate: referenceDate)
                     }
@@ -724,6 +726,77 @@ struct IslandPanelView: View {
                 .fill(.white.opacity(0.055))
                 .frame(height: 1)
         }
+    }
+
+    @ViewBuilder
+    private var animatedUsageStatus: some View {
+        let providers = openedUsageProviders
+
+        if model.islandUsageDisplay == .animated,
+           let theme = model.selectedUsageTheme,
+           let peakUsage = providers.map(\.peakUsedPercentage).max() {
+            HStack(spacing: 14) {
+                UsageThemeView(theme: theme, usedPercentage: peakUsage, size: 88)
+                    .frame(width: 96, height: 96)
+
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 24) {
+                        ForEach(providers) { provider in
+                            expandedUsageProvider(provider)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(providers) { provider in
+                            expandedUsageProvider(provider)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.leading, sessionListSideInset)
+            .padding(.trailing, sessionListSideInset)
+            .padding(.vertical, 6)
+            .background(Color.white.opacity(0.012))
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(.white.opacity(0.055))
+                    .frame(height: 1)
+            }
+        }
+    }
+
+    private func expandedUsageProvider(_ provider: UsageProviderPresentation) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(provider.title.uppercased())
+                .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
+                .tracking(1.2)
+                .foregroundStyle(V6Palette.paper.opacity(0.5))
+
+            HStack(spacing: 14) {
+                ForEach(provider.windows) { window in
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(alignment: .firstTextBaseline, spacing: 5) {
+                            Text(window.label)
+                                .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
+                                .foregroundStyle(V6Palette.paper.opacity(0.42))
+                            Text("\(window.roundedUsedPercentage)%")
+                                .font(.system(size: 16, weight: .bold, design: .monospaced))
+                                .foregroundStyle(usageColor(for: window.usedPercentage))
+                        }
+
+                        if let resetsAt = window.resetsAt,
+                           let remaining = remainingDurationString(until: resetsAt) {
+                            Text(remaining)
+                                .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                                .foregroundStyle(V6Palette.paper.opacity(0.3))
+                        }
+                    }
+                }
+            }
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .help(usageHelpText(for: provider))
     }
 
     private func sessionOverviewItems(referenceDate: Date) -> [SessionOverviewItem] {
@@ -1032,10 +1105,6 @@ struct IslandPanelView: View {
 
     private func compactUsageChip(_ provider: UsageProviderPresentation, usesShortTitle: Bool) -> some View {
         HStack(spacing: 5) {
-            if model.islandUsageDisplay == .animated, let theme = model.selectedUsageTheme {
-                UsageThemeView(theme: theme, usedPercentage: provider.peakUsedPercentage, size: 22)
-            }
-
             Text(usesShortTitle ? provider.shortTitle : provider.title)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.74))
