@@ -233,6 +233,13 @@
 "skills.title" = "Codex Skills";
 "skills.count" = "%d skills";
 "skills.search" = "Search skills";
+"skills.search.prefix" = "Name starts with…";
+"skills.search.regex" = "Regular expression…";
+"skills.searchMode" = "Search mode";
+"skills.searchMode.prefix" = "Prefix";
+"skills.searchMode.regex" = "Regex";
+"skills.regex.invalid.title" = "Invalid Regular Expression";
+"skills.regex.invalid.description" = "Check the pattern and try again.";
 "skills.refresh" = "Refresh skills";
 "skills.empty.title" = "No Skills Found";
 "skills.empty.description" = "Add skills to ~/.agents/skills and refresh.";

@@ -232,6 +232,13 @@
 "skills.title" = "Codex Skills";
 "skills.count" = "%d 個 Skill";
 "skills.search" = "搜尋 Skill";
+"skills.search.prefix" = "名稱開頭…";
+"skills.search.regex" = "正規表示式…";
+"skills.searchMode" = "搜尋模式";
+"skills.searchMode.prefix" = "前綴";
+"skills.searchMode.regex" = "正規式";
+"skills.regex.invalid.title" = "正規表示式無效";
+"skills.regex.invalid.description" = "請檢查表示式後再試。";
 "skills.refresh" = "重新整理 Skills";
 "skills.empty.title" = "找不到 Skill";
 "skills.empty.description" = "將 Skill 加入 ~/.agents/skills 後重新整理。";

@@ -233,6 +233,13 @@
 "skills.title" = "Codex Skills";
 "skills.count" = "%d 个 Skill";
 "skills.search" = "搜索 Skill";
+"skills.search.prefix" = "名称开头…";
+"skills.search.regex" = "正则表达式…";
+"skills.searchMode" = "搜索模式";
+"skills.searchMode.prefix" = "前缀";
+"skills.searchMode.regex" = "正则";
+"skills.regex.invalid.title" = "正则表达式无效";
+"skills.regex.invalid.description" = "请检查表达式后重试。";
 "skills.refresh" = "刷新 Skills";
 "skills.empty.title" = "未找到 Skill";
 "skills.empty.description" = "将 Skill 添加到 ~/.agents/skills 后刷新。";

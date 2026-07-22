@@ -4,7 +4,7 @@ import Testing
 
 struct CodexSkillCatalogTests {
     @Test
-    func loadsNestedSkillsAndPreservesDuplicateNames() throws {
+    func loadsOnlyParentSkillsAndDeduplicatesNames() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let current = root.appendingPathComponent("current")
@@ -16,8 +16,8 @@ struct CodexSkillCatalogTests {
 
         let skills = CodexSkillCatalog(roots: [(current, .user), (legacy, .legacy)]).load()
 
-        #expect(skills.map(\.name) == ["build", "review", "review"])
-        #expect(skills.filter { $0.name == "review" }.map(\.source) == [.user, .legacy])
+        #expect(skills.map(\.name) == ["review"])
+        #expect(skills.first?.source == .user)
     }
 
     @Test
@@ -59,6 +59,51 @@ struct CodexSkillCatalogTests {
     }
 
     @Test
+    func pluginCacheLoadsOnlyDirectChildrenOfSkillsDirectory() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let pluginCache = root.appendingPathComponent("plugins/cache")
+        let pluginSkills = pluginCache.appendingPathComponent("vendor/browser/1.0.0/skills")
+
+        try writeSkill(named: "browser", description: "Browse pages", under: pluginSkills)
+        try writeSkill(named: "browser-helper", description: "Internal helper", under: pluginSkills.appendingPathComponent("browser/skills"))
+
+        let skills = CodexSkillCatalog(roots: [(pluginCache, .plugin)]).load()
+
+        #expect(skills.map(\.name) == ["browser"])
+    }
+
+    @Test
+    func prefixSearchMatchesNamesOnlyFromTheBeginning() {
+        let skills = [
+            skill(named: "autoplan", description: "Build a plan"),
+            skill(named: "browser", description: "Browse pages"),
+            skill(named: "benchmark", description: "Measure performance"),
+            skill(named: "web-clone", description: "Clone a site"),
+        ]
+
+        let results = CodexSkillSearch(query: "b", mode: .prefix).filter(skills)
+
+        #expect(results.map(\.name) == ["browser", "benchmark"])
+    }
+
+    @Test
+    func regularExpressionSearchMatchesNamesAndReportsInvalidPatterns() {
+        let skills = [
+            skill(named: "browser", description: "Browse pages"),
+            skill(named: "benchmark", description: "Measure performance"),
+            skill(named: "build-web-apps", description: "Build apps"),
+        ]
+        let search = CodexSkillSearch(query: "^b.*(er|mark)$", mode: .regularExpression)
+        let invalidSearch = CodexSkillSearch(query: "[", mode: .regularExpression)
+
+        #expect(search.isValid)
+        #expect(search.filter(skills).map(\.name) == ["browser", "benchmark"])
+        #expect(!invalidSearch.isValid)
+        #expect(invalidSearch.filter(skills).isEmpty)
+    }
+
+    @Test
     func derivesMentionAndAlphabeticGroup() {
         let skill = CodexSkill(
             name: "review",
@@ -81,5 +126,14 @@ struct CodexSkillCatalogTests {
         ---
         """
         try contents.write(to: directory.appendingPathComponent("SKILL.md"), atomically: true, encoding: .utf8)
+    }
+
+    private func skill(named name: String, description: String) -> CodexSkill {
+        CodexSkill(
+            name: name,
+            description: description,
+            fileURL: URL(fileURLWithPath: "/tmp/\(name)/SKILL.md"),
+            source: .user
+        )
     }
 }

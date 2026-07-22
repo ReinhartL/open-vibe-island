@@ -25,7 +25,7 @@ struct CodexSkill: Identifiable, Equatable, Sendable {
 struct CodexSkillCatalog {
     private static let excludedDirectoryNames: Set<String> = [
         ".build", ".git", "assets", "checkouts", "docs", "node_modules",
-        "references", "scripts", "tests", "vendor",
+        "references", "scripts", "tests",
     ]
 
     private let fileManager: FileManager
@@ -59,43 +59,76 @@ struct CodexSkillCatalog {
     }
 
     func load() -> [CodexSkill] {
-        roots.flatMap { loadSkills(at: $0.url, source: $0.source) }.sorted {
-            let nameOrder = $0.name.localizedStandardCompare($1.name)
-            if nameOrder == .orderedSame {
-                return $0.fileURL.path.localizedStandardCompare($1.fileURL.path) == .orderedAscending
+        var seenNames: Set<String> = []
+        return roots.flatMap { loadSkills(at: $0.url, source: $0.source) }
+            .filter { seenNames.insert($0.name.lowercased()).inserted }
+            .sorted {
+                let nameOrder = $0.name.localizedStandardCompare($1.name)
+                if nameOrder == .orderedSame {
+                    return $0.fileURL.path.localizedStandardCompare($1.fileURL.path) == .orderedAscending
+                }
+                return nameOrder == .orderedAscending
             }
-            return nameOrder == .orderedAscending
-        }
     }
 
     private func loadSkills(at root: URL, source: CodexSkill.Source) -> [CodexSkill] {
-        guard let enumerator = fileManager.enumerator(
-            at: root,
-            includingPropertiesForKeys: [.isDirectoryKey, .isRegularFileKey],
-            options: [.skipsPackageDescendants]
-        ) else { return [] }
+        if source == .plugin {
+            return loadPluginSkills(at: root)
+        }
 
-        var skills: [CodexSkill] = []
-        for case let skillURL as URL in enumerator {
-            if Self.excludedDirectoryNames.contains(skillURL.lastPathComponent),
-               (try? skillURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
-                enumerator.skipDescendants()
-                continue
-            }
-            guard skillURL.lastPathComponent == "SKILL.md" else { continue }
-            guard let contents = try? String(contentsOf: skillURL, encoding: .utf8),
-                  let metadata = Self.parseFrontMatter(contents) else { continue }
-
-            let name = metadata.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !name.isEmpty else { continue }
-            skills.append(CodexSkill(
-                name: name,
-                description: metadata.description.trimmingCharacters(in: .whitespacesAndNewlines),
-                fileURL: skillURL,
+        var skills = loadDirectSkills(at: root, source: source)
+        if source == .configured {
+            skills.append(contentsOf: loadDirectSkills(
+                at: root.appendingPathComponent(".system", isDirectory: true),
                 source: source
             ))
         }
         return skills
+    }
+
+    private func loadPluginSkills(at root: URL) -> [CodexSkill] {
+        guard let enumerator = fileManager.enumerator(
+            at: root,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsPackageDescendants]
+        ) else { return [] }
+
+        var skills: [CodexSkill] = []
+        for case let url as URL in enumerator {
+            let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+            guard isDirectory else { continue }
+            if Self.excludedDirectoryNames.contains(url.lastPathComponent) {
+                enumerator.skipDescendants()
+                continue
+            }
+            guard url.lastPathComponent == "skills" else { continue }
+            skills.append(contentsOf: loadDirectSkills(at: url, source: .plugin))
+            enumerator.skipDescendants()
+        }
+        return skills
+    }
+
+    private func loadDirectSkills(at root: URL, source: CodexSkill.Source) -> [CodexSkill] {
+        guard let directories = try? fileManager.contentsOfDirectory(
+            at: root,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: []
+        ) else { return [] }
+
+        return directories.compactMap { directory in
+            let skillURL = directory.appendingPathComponent("SKILL.md")
+            guard let contents = try? String(contentsOf: skillURL, encoding: .utf8),
+                  let metadata = Self.parseFrontMatter(contents) else { return nil }
+
+            let name = metadata.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return nil }
+            return CodexSkill(
+                name: name,
+                description: metadata.description.trimmingCharacters(in: .whitespacesAndNewlines),
+                fileURL: skillURL,
+                source: source
+            )
+        }
     }
 
     static func parseFrontMatter(_ contents: String) -> (name: String, description: String)? {
@@ -132,5 +165,46 @@ struct CodexSkillCatalog {
               let last = value.last,
               (first == "\"" && last == "\"") || (first == "'" && last == "'") else { return value }
         return String(value.dropFirst().dropLast())
+    }
+}
+
+enum CodexSkillSearchMode: String, CaseIterable, Identifiable, Sendable {
+    case prefix
+    case regularExpression
+
+    var id: String { rawValue }
+}
+
+struct CodexSkillSearch {
+    let query: String
+    let mode: CodexSkillSearchMode
+
+    var isValid: Bool {
+        mode != .regularExpression || regularExpression != nil
+    }
+
+    func filter(_ skills: [CodexSkill]) -> [CodexSkill] {
+        let value = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return skills }
+
+        switch mode {
+        case .prefix:
+            return skills.filter {
+                $0.name.range(
+                    of: value,
+                    options: [.anchored, .caseInsensitive, .diacriticInsensitive]
+                ) != nil
+            }
+        case .regularExpression:
+            guard let regularExpression else { return [] }
+            return skills.filter { skill in
+                let range = NSRange(skill.name.startIndex..<skill.name.endIndex, in: skill.name)
+                return regularExpression.firstMatch(in: skill.name, range: range) != nil
+            }
+        }
+    }
+
+    private var regularExpression: NSRegularExpression? {
+        try? NSRegularExpression(pattern: query, options: [.caseInsensitive])
     }
 }

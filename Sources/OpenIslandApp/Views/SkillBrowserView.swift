@@ -6,6 +6,7 @@ struct SkillBrowserView: View {
 
     @State private var skills: [CodexSkill] = []
     @State private var query = ""
+    @State private var searchMode: CodexSkillSearchMode = .prefix
     @State private var hoveredSkill: CodexSkill?
     @State private var copiedSkillID: String?
     @FocusState private var searchFocused: Bool
@@ -18,13 +19,10 @@ struct SkillBrowserView: View {
     private var lang: LanguageManager { model.lang }
 
     private var filteredSkills: [CodexSkill] {
-        let value = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty else { return skills }
-        return skills.filter {
-            $0.name.localizedCaseInsensitiveContains(value)
-                || $0.description.localizedCaseInsensitiveContains(value)
-        }
+        search.filter(skills)
     }
+
+    private var search: CodexSkillSearch { CodexSkillSearch(query: query, mode: searchMode) }
 
     private var groups: [(initial: String, skills: [CodexSkill])] {
         Dictionary(grouping: filteredSkills, by: \.initial)
@@ -75,10 +73,27 @@ struct SkillBrowserView: View {
 
             Spacer(minLength: 20)
 
-            TextField(lang.t("skills.search"), text: $query)
-                .textFieldStyle(.roundedBorder)
-                .focused($searchFocused)
-                .frame(width: 300)
+            Picker(lang.t("skills.searchMode"), selection: $searchMode) {
+                Text(lang.t("skills.searchMode.prefix")).tag(CodexSkillSearchMode.prefix)
+                Text(lang.t("skills.searchMode.regex")).tag(CodexSkillSearchMode.regularExpression)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 138)
+
+            TextField(
+                searchMode == .prefix ? lang.t("skills.search.prefix") : lang.t("skills.search.regex"),
+                text: $query
+            )
+            .textFieldStyle(.roundedBorder)
+            .focused($searchFocused)
+            .overlay {
+                if !search.isValid {
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.red.opacity(0.85), lineWidth: 1)
+                }
+            }
+            .frame(width: 260)
 
             Button {
                 reload()
@@ -99,6 +114,12 @@ struct SkillBrowserView: View {
                 lang.t("skills.empty.title"),
                 systemImage: "square.stack.3d.up.slash",
                 description: Text(lang.t("skills.empty.description"))
+            )
+        } else if !search.isValid {
+            ContentUnavailableView(
+                lang.t("skills.regex.invalid.title"),
+                systemImage: "exclamationmark.triangle",
+                description: Text(lang.t("skills.regex.invalid.description"))
             )
         } else if filteredSkills.isEmpty {
             ContentUnavailableView.search(text: query)
