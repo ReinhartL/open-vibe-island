@@ -66,6 +66,7 @@ struct IslandAppearancePreferences: Equatable, Sendable {
 enum IslandUsageDisplay: String, CaseIterable, Identifiable, Sendable {
     case hidden
     case compact
+    case animated
 
     var id: String { rawValue }
 }

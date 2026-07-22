@@ -68,6 +68,11 @@ final class AppModel {
     let monitoring = ProcessMonitoringCoordinator()
     let codexAppServer = CodexAppServerCoordinator()
     let updateChecker = UpdateChecker()
+    var selectedUsageTheme: UsageTheme? = {
+        guard let rawID = UserDefaults.standard.string(forKey: UsageThemeStore.selectedThemeDefaultsKey),
+              let id = UUID(uuidString: rawID) else { return nil }
+        return UsageThemeStore().loadTheme(id: id)
+    }()
 
     var notchStatus: NotchStatus {
         get { overlay.notchStatus }
@@ -400,6 +405,13 @@ final class AppModel {
         case .topBar:
             update(&topBarAppearancePreferences)
         }
+    }
+
+    func importUsageTheme(name: String, imageURLs: [URL]) throws {
+        let theme = try UsageThemeStore().importTheme(name: name, imageURLs: imageURLs)
+        selectedUsageTheme = theme
+        UserDefaults.standard.set(theme.id.uuidString, forKey: UsageThemeStore.selectedThemeDefaultsKey)
+        refreshOverlayPlacementIfVisible()
     }
 
     private func appearancePreferencesDidChange(

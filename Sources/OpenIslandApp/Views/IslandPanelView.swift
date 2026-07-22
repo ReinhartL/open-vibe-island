@@ -859,7 +859,7 @@ struct IslandPanelView: View {
     }
 
     private var openedUsageProviders: [UsageProviderPresentation] {
-        guard model.islandUsageDisplay == .compact else {
+        guard model.islandUsageDisplay != .hidden else {
             return []
         }
 
@@ -1032,6 +1032,10 @@ struct IslandPanelView: View {
 
     private func compactUsageChip(_ provider: UsageProviderPresentation, usesShortTitle: Bool) -> some View {
         HStack(spacing: 5) {
+            if model.islandUsageDisplay == .animated, let theme = model.selectedUsageTheme {
+                UsageThemeView(theme: theme, usedPercentage: provider.peakUsedPercentage, size: 22)
+            }
+
             Text(usesShortTitle ? provider.shortTitle : provider.title)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.74))

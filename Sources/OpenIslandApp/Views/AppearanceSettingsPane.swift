@@ -13,6 +13,7 @@ struct AppearanceSettingsPane: View {
     var model: AppModel
     @State private var previewMode: UnifiedBars.Mode = .idle
     @State private var previewAutoCycle: Bool = true
+    @State private var usageThemeImportError: String?
 
     private static let autoCycleOrder: [UnifiedBars.Mode] = [.idle, .running, .waiting]
     private static let autoCycleInterval: TimeInterval = 2.0
@@ -389,6 +390,40 @@ struct AppearanceSettingsPane: View {
                 }
             }
         }
+
+        if editingPreferences.usageDisplay == .animated {
+            HStack(spacing: 12) {
+                if let theme = model.selectedUsageTheme {
+                    UsageThemeView(theme: theme, usedPercentage: 62, size: 52)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(theme.name)
+                            .font(.system(size: 12.5, weight: .semibold))
+                        Text(lang.t("settings.appearance.usageTheme.ready"))
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.secondary)
+                    Text(lang.t("settings.appearance.usageTheme.empty"))
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button(lang.t("settings.appearance.usageTheme.import")) {
+                    importUsageThemeFrames()
+                }
+            }
+            .padding(12)
+            .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            if let usageThemeImportError {
+                Text(usageThemeImportError)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
     }
 
     // MARK: - 03 · Session state
@@ -593,6 +628,24 @@ struct AppearanceSettingsPane: View {
         switch option {
         case .hidden:  lang.t("settings.appearance.usageDisplay.hidden")
         case .compact: lang.t("settings.appearance.usageDisplay.compact")
+        case .animated: lang.t("settings.appearance.usageDisplay.animated")
+        }
+    }
+
+    private func importUsageThemeFrames() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.allowedContentTypes = [.png, .jpeg, .webP]
+        panel.prompt = lang.t("settings.appearance.usageTheme.import")
+        guard panel.runModal() == .OK else { return }
+
+        do {
+            try model.importUsageTheme(name: "Custom Usage Theme", imageURLs: panel.urls)
+            model.updateAppearancePreferences(for: editingProfile) { $0.usageDisplay = .animated }
+            usageThemeImportError = nil
+        } catch {
+            usageThemeImportError = error.localizedDescription
         }
     }
 
@@ -1422,6 +1475,13 @@ private struct UsageDisplayPreview: View {
             if option == .compact {
                 usageChip("Cl", window: "5h", value: 42, color: Color(hex: AgentTool.claudeCode.brandColorHex) ?? .orange)
                 usageChip("Cx", window: "7d", value: 13, color: Color(hex: AgentTool.codex.brandColorHex) ?? .blue)
+            } else if option == .animated {
+                HStack(spacing: 3) {
+                    Image(systemName: "photo.fill")
+                    Text("62%")
+                        .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                }
+                .foregroundStyle(V6Palette.paper.opacity(0.72))
             } else {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(V6Palette.paper.opacity(0.18))

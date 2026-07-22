@@ -77,6 +77,10 @@
 "settings.appearance.usageDisplay.note" = "控制展開後的 Island 是否顯示緊湊的代理用量。";
 "settings.appearance.usageDisplay.hidden" = "隱藏";
 "settings.appearance.usageDisplay.compact" = "緊湊";
+"settings.appearance.usageDisplay.animated" = "動畫主題";
+"settings.appearance.usageTheme.import" = "匯入四幀";
+"settings.appearance.usageTheme.empty" = "匯入四張尺寸一致的圖片來建立主題。";
+"settings.appearance.usageTheme.ready" = "四個用量階段已就緒";
 "settings.appearance.stateIndicator.title" = "03 · 會話狀態";
 "settings.appearance.stateIndicator.note" = "控制列表列如何呈現執行、等待和完成狀態。";
 "settings.appearance.stateIndicator.animatedDot" = "動效點";
