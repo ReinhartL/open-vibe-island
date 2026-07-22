@@ -61,6 +61,23 @@ struct UsageThemeTests {
     }
 
     @Test
+    func ordersImportedFramesByNaturalFilename() {
+        let urls = [
+            URL(fileURLWithPath: "/tmp/frame-4-75-100.png"),
+            URL(fileURLWithPath: "/tmp/frame-1-0-24.png"),
+            URL(fileURLWithPath: "/tmp/frame-3-50-74.png"),
+            URL(fileURLWithPath: "/tmp/frame-2-25-49.png"),
+        ]
+
+        #expect(UsageThemeStore.orderedImageURLs(urls).map(\.lastPathComponent) == [
+            "frame-1-0-24.png",
+            "frame-2-25-49.png",
+            "frame-3-50-74.png",
+            "frame-4-75-100.png",
+        ])
+    }
+
+    @Test
     func importsFourMatchingImagesAndReloadsManifest() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("usage-theme-tests-\(UUID().uuidString)")

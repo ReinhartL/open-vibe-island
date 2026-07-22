@@ -425,6 +425,11 @@ struct AppearanceSettingsPane: View {
             .padding(12)
             .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
+            Text(lang.t("settings.appearance.usageTheme.importOrder"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
             if let usageThemeImportError {
                 Text(usageThemeImportError)
                     .font(.caption)
@@ -645,10 +650,12 @@ struct AppearanceSettingsPane: View {
         panel.canChooseDirectories = false
         panel.allowedContentTypes = [.png, .jpeg, .webP]
         panel.prompt = lang.t("settings.appearance.usageTheme.import")
+        panel.message = lang.t("settings.appearance.usageTheme.importOrder")
         guard panel.runModal() == .OK else { return }
 
         do {
-            try model.importUsageTheme(name: "Custom Usage Theme", imageURLs: panel.urls)
+            let orderedURLs = UsageThemeStore.orderedImageURLs(panel.urls)
+            try model.importUsageTheme(name: "Custom Usage Theme", imageURLs: orderedURLs)
             model.updateAppearancePreferences(for: editingProfile) { $0.usageDisplay = .animated }
             usageThemeImportError = nil
         } catch {

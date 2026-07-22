@@ -45,6 +45,12 @@ struct UsageThemeStore {
     private let fileManager: FileManager
     let rootURL: URL
 
+    static func orderedImageURLs(_ urls: [URL]) -> [URL] {
+        urls.sorted {
+            $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+        }
+    }
+
     init(fileManager: FileManager = .default, rootURL: URL? = nil) {
         self.fileManager = fileManager
         self.rootURL = rootURL ?? fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

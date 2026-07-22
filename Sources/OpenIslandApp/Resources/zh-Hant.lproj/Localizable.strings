@@ -82,6 +82,7 @@
 "settings.appearance.usageTheme.generate" = "使用 AI 生成";
 "settings.appearance.usageTheme.empty" = "匯入四張尺寸一致的圖片來建立主題。";
 "settings.appearance.usageTheme.ready" = "四個用量階段已就緒";
+"settings.appearance.usageTheme.importOrder" = "匯入前請依順序命名：frame-1-0-24.png、frame-2-25-49.png、frame-3-50-74.png、frame-4-75-100.png。App 會依檔名自動排序。";
 "settings.appearance.stateIndicator.title" = "03 · 會話狀態";
 "settings.appearance.stateIndicator.note" = "控制列表列如何呈現執行、等待和完成狀態。";
 "settings.appearance.stateIndicator.animatedDot" = "動效點";
