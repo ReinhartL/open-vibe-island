@@ -755,7 +755,7 @@ struct IslandPanelView: View {
                let peakUsage = providers.map(\.peakUsedPercentage).max() {
                 UsageThemeView(theme: theme, usedPercentage: peakUsage, size: 112)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .offset(x: 4)
+                    .offset(x: 12)
             }
         }
         .frame(width: 112)
