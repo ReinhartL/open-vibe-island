@@ -17,7 +17,7 @@ final class OverlayPanelController {
     // Content padding top + scroll padding + v8 list header/footer + bottom inset.
     // Rows are now full-width scan rows, so the old inter-card spacing is gone.
     private static let openedContentVerticalInsets: CGFloat = 84
-    private static let animatedUsageStatusHeight: CGFloat = 109
+    private static let animatedUsageArtworkMinimumHeight: CGFloat = 132
     private static let notificationMeasuredContentPadding: CGFloat = 8
     private static let notificationEstimatedVerticalInsets: CGFloat = 36
     private static let openedEmptyStateHeight: CGFloat = 108
@@ -548,13 +548,14 @@ final class OverlayPanelController {
         let listHeight = rowsHeight + spacingHeight
         // Cap to match AutoHeightScrollView's maxHeight in IslandPanelView.
         let cappedListHeight = min(listHeight, Self.maxSessionListHeight)
-        let usageStatusHeight = model.islandUsageDisplay == .animated
+        let showsUsageArtwork = model.islandUsageDisplay == .animated
             && model.selectedUsageTheme != nil
             && (model.claudeUsageSnapshot?.isEmpty == false
                 || (model.showCodexUsage && model.codexUsageSnapshot?.isEmpty == false))
-            ? Self.animatedUsageStatusHeight
-            : 0
-        return cappedListHeight + Self.openedContentVerticalInsets + usageStatusHeight
+        let contentHeight = showsUsageArtwork
+            ? max(cappedListHeight, Self.animatedUsageArtworkMinimumHeight)
+            : cappedListHeight
+        return contentHeight + Self.openedContentVerticalInsets
     }
 
     /// Additional height for the actionable session's inline action area.

@@ -555,13 +555,21 @@ struct IslandPanelView: View {
                 VStack(spacing: 0) {
                     sessionPanelHeader(referenceDate: referenceDate)
 
-                    animatedUsageStatus
+                    HStack(spacing: 0) {
+                        if shouldShowAnimatedUsageArtwork {
+                            animatedUsageArtwork
+                            Rectangle().fill(.white.opacity(0.055)).frame(width: 1)
+                        }
 
-                    ScrollView(.vertical) {
-                        sessionRowsContent(referenceDate: referenceDate)
+                        ScrollView(.vertical) {
+                            sessionRowsContent(
+                                referenceDate: referenceDate,
+                                sideInset: shouldShowAnimatedUsageArtwork ? 16 : sessionListSideInset
+                            )
+                        }
+                        .scrollIndicators(.hidden)
+                        .scrollBounceBehavior(.basedOnSize)
                     }
-                    .scrollIndicators(.hidden)
-                    .scrollBounceBehavior(.basedOnSize)
 
                     sessionPanelFooter
                 }
@@ -662,11 +670,13 @@ struct IslandPanelView: View {
     }
 
     @ViewBuilder
-    private func sessionRowsContent(referenceDate: Date) -> some View {
+    private func sessionRowsContent(referenceDate: Date, sideInset: CGFloat? = nil) -> some View {
+        let rowSideInset = sideInset ?? sessionListSideInset
+
         ForEach(model.islandSessionSections) { section in
             VStack(alignment: .leading, spacing: 0) {
                 if model.islandSessionGroup != .none {
-                    sessionSectionHeader(section)
+                    sessionSectionHeader(section, sideInset: rowSideInset)
                 }
 
                 ForEach(section.sessions) { session in
@@ -678,7 +688,7 @@ struct IslandPanelView: View {
                         isActionable: session.phase.requiresAttention || session.id == actionableSessionID,
                         useDrawingGroup: model.notchStatus == .opened,
                         isInteractive: model.notchStatus == .opened,
-                        sideInset: sessionListSideInset,
+                        sideInset: rowSideInset,
                         lang: model.lang,
                         onApprove: { model.approvePermission(for: session.id, action: $0) },
                         onAnswer: { model.answerQuestion(for: session.id, answer: $0) },
@@ -728,75 +738,28 @@ struct IslandPanelView: View {
         }
     }
 
-    @ViewBuilder
-    private var animatedUsageStatus: some View {
+    private var shouldShowAnimatedUsageArtwork: Bool {
         let providers = openedUsageProviders
-
-        if model.islandUsageDisplay == .animated,
-           let theme = model.selectedUsageTheme,
-           let peakUsage = providers.map(\.peakUsedPercentage).max() {
-            HStack(spacing: 14) {
-                UsageThemeView(theme: theme, usedPercentage: peakUsage, size: 88)
-                    .frame(width: 96, height: 96)
-
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 24) {
-                        ForEach(providers) { provider in
-                            expandedUsageProvider(provider)
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(providers) { provider in
-                            expandedUsageProvider(provider)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.leading, sessionListSideInset)
-            .padding(.trailing, sessionListSideInset)
-            .padding(.vertical, 6)
-            .background(Color.white.opacity(0.012))
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(.white.opacity(0.055))
-                    .frame(height: 1)
-            }
-        }
+        return model.islandUsageDisplay == .animated
+            && model.selectedUsageTheme != nil
+            && providers.isEmpty == false
     }
 
-    private func expandedUsageProvider(_ provider: UsageProviderPresentation) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(provider.title.uppercased())
-                .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
-                .tracking(1.2)
-                .foregroundStyle(V6Palette.paper.opacity(0.5))
+    @ViewBuilder
+    private var animatedUsageArtwork: some View {
+        let providers = openedUsageProviders
 
-            HStack(spacing: 14) {
-                ForEach(provider.windows) { window in
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(alignment: .firstTextBaseline, spacing: 5) {
-                            Text(window.label)
-                                .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
-                                .foregroundStyle(V6Palette.paper.opacity(0.42))
-                            Text("\(window.roundedUsedPercentage)%")
-                                .font(.system(size: 16, weight: .bold, design: .monospaced))
-                                .foregroundStyle(usageColor(for: window.usedPercentage))
-                        }
-
-                        if let resetsAt = window.resetsAt,
-                           let remaining = remainingDurationString(until: resetsAt) {
-                            Text(remaining)
-                                .font(.system(size: 9.5, weight: .medium, design: .monospaced))
-                                .foregroundStyle(V6Palette.paper.opacity(0.3))
-                        }
-                    }
-                }
+        Group {
+            if shouldShowAnimatedUsageArtwork,
+               let theme = model.selectedUsageTheme,
+               let peakUsage = providers.map(\.peakUsedPercentage).max() {
+                UsageThemeView(theme: theme, usedPercentage: peakUsage, size: 112)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
         }
-        .fixedSize(horizontal: true, vertical: false)
-        .help(usageHelpText(for: provider))
+        .frame(width: 174)
+        .frame(maxHeight: .infinity)
+        .background(Color.white.opacity(0.008))
     }
 
     private func sessionOverviewItems(referenceDate: Date) -> [SessionOverviewItem] {
@@ -865,8 +828,10 @@ struct IslandPanelView: View {
         return "\(item.count) \(compact ? item.compactTitle : item.title)"
     }
 
-    private func sessionSectionHeader(_ section: IslandSessionSection) -> some View {
-        HStack(spacing: 8) {
+    private func sessionSectionHeader(_ section: IslandSessionSection, sideInset: CGFloat? = nil) -> some View {
+        let inset = sideInset ?? sessionListSideInset
+
+        return HStack(spacing: 8) {
             Circle()
                 .fill(sectionTint(for: section))
                 .frame(width: 7, height: 7)
@@ -879,8 +844,8 @@ struct IslandPanelView: View {
                 .foregroundStyle(V6Palette.paper.opacity(0.4))
             Spacer(minLength: 0)
         }
-        .padding(.leading, sessionListSideInset)
-        .padding(.trailing, sessionListSideInset)
+        .padding(.leading, inset)
+        .padding(.trailing, inset)
         .padding(.top, 10)
         .padding(.bottom, 7)
         .background(Color.white.opacity(0.008))
