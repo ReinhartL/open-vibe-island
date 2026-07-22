@@ -564,7 +564,7 @@ struct IslandPanelView: View {
                         ScrollView(.vertical) {
                             sessionRowsContent(
                                 referenceDate: referenceDate,
-                                sideInset: shouldShowAnimatedUsageArtwork ? 16 : sessionListSideInset
+                                sideInset: shouldShowAnimatedUsageArtwork ? 12 : sessionListSideInset
                             )
                         }
                         .scrollIndicators(.hidden)
@@ -757,7 +757,7 @@ struct IslandPanelView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
         }
-        .frame(width: 174)
+        .frame(width: 128)
         .frame(maxHeight: .infinity)
         .background(Color.white.opacity(0.008))
     }
