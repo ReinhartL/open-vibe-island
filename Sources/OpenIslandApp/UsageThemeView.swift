@@ -11,7 +11,9 @@ struct UsageThemeView: View {
     var body: some View {
         Group {
             if let frameName = theme.frameName(for: usedPercentage),
-               let image = NSImage(contentsOf: store.imageURL(theme: theme, frameName: frameName)) {
+               let image = UsageThemeImageCache.image(
+                at: store.imageURL(theme: theme, frameName: frameName)
+               ) {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
@@ -25,5 +27,20 @@ struct UsageThemeView: View {
         .frame(width: size, height: size)
         .animation(.easeInOut(duration: 0.3), value: theme.frameName(for: usedPercentage))
         .accessibilityLabel("Usage \(Int(usedPercentage.rounded())) percent")
+    }
+}
+
+@MainActor
+private enum UsageThemeImageCache {
+    private static let images = NSCache<NSURL, NSImage>()
+
+    static func image(at url: URL) -> NSImage? {
+        if let cached = images.object(forKey: url as NSURL) {
+            return cached
+        }
+        guard let source = NSImage(contentsOf: url),
+              let normalized = UsageThemeImageNormalizer.normalize(source) else { return nil }
+        images.setObject(normalized, forKey: url as NSURL)
+        return normalized
     }
 }

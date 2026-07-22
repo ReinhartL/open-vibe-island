@@ -103,7 +103,7 @@ struct UsageThemeTests {
     }
 
     @Test
-    func rejectsMismatchedImageDimensions() throws {
+    func normalizesMismatchedImageDimensions() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("usage-theme-tests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -113,9 +113,14 @@ struct UsageThemeTests {
             return url
         }
 
-        #expect(throws: UsageThemeError.self) {
-            _ = try UsageThemeStore(rootURL: root.appendingPathComponent("themes"))
-                .importTheme(name: "Invalid", imageURLs: urls)
+        let store = UsageThemeStore(rootURL: root.appendingPathComponent("themes"))
+        let theme = try store.importTheme(name: "Mixed sizes", imageURLs: urls)
+
+        for frame in theme.frames {
+            let image = try #require(NSImage(contentsOf: store.imageURL(theme: theme, frameName: frame)))
+            let representation = try #require(image.representations.first)
+            #expect(representation.pixelsWide == UsageThemeImageNormalizer.canvasSize)
+            #expect(representation.pixelsHigh == UsageThemeImageNormalizer.canvasSize)
         }
     }
 

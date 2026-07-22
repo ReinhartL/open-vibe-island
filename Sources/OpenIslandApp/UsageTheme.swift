@@ -88,11 +88,6 @@ struct UsageThemeStore {
     }
 
     private func persist(name: String, images: [NSImage]) throws -> UsageTheme {
-        guard let size = images.first?.pixelSize,
-              images.dropFirst().allSatisfy({ $0.pixelSize == size }) else {
-            throw UsageThemeError.mismatchedDimensions
-        }
-
         let theme = UsageTheme(
             id: UUID(),
             name: name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Custom Usage Theme" : name,
@@ -103,7 +98,8 @@ struct UsageThemeStore {
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
 
         for (index, image) in images.enumerated() {
-            guard let png = image.pngData else {
+            guard let normalized = UsageThemeImageNormalizer.normalize(image),
+                  let png = normalized.pngData else {
                 throw UsageThemeError.unreadableImage("frame-\(index + 1)")
             }
             try png.write(to: directory.appendingPathComponent(theme.frames[index]), options: .atomic)
@@ -125,6 +121,81 @@ struct UsageThemeStore {
 
     private func directoryURL(for theme: UsageTheme) -> URL {
         rootURL.appendingPathComponent(theme.id.uuidString, isDirectory: true)
+    }
+}
+
+enum UsageThemeImageNormalizer {
+    static let canvasSize = 512
+    private static let contentInset = 32
+    private static let alphaThreshold: UInt8 = 2
+
+    static func normalize(_ image: NSImage) -> NSImage? {
+        guard let tiff = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff),
+              let source = bitmap.cgImage else { return nil }
+
+        let visibleBounds = alphaBounds(in: bitmap)
+            ?? CGRect(x: 0, y: 0, width: source.width, height: source.height)
+        guard let cropped = source.cropping(to: visibleBounds) else { return nil }
+
+        let available = CGFloat(canvasSize - (contentInset * 2))
+        let scale = min(available / CGFloat(cropped.width), available / CGFloat(cropped.height))
+        let drawSize = CGSize(
+            width: CGFloat(cropped.width) * scale,
+            height: CGFloat(cropped.height) * scale
+        )
+        let drawRect = CGRect(
+            x: (CGFloat(canvasSize) - drawSize.width) / 2,
+            y: (CGFloat(canvasSize) - drawSize.height) / 2,
+            width: drawSize.width,
+            height: drawSize.height
+        )
+
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(
+                data: nil,
+                width: canvasSize,
+                height: canvasSize,
+                bitsPerComponent: 8,
+                bytesPerRow: 0,
+                space: colorSpace,
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+              ) else { return nil }
+
+        context.interpolationQuality = .none
+        context.clear(CGRect(x: 0, y: 0, width: canvasSize, height: canvasSize))
+        context.draw(cropped, in: drawRect)
+        guard let output = context.makeImage() else { return nil }
+        return NSImage(cgImage: output, size: NSSize(width: canvasSize, height: canvasSize))
+    }
+
+    private static func alphaBounds(in bitmap: NSBitmapImageRep) -> CGRect? {
+        guard bitmap.hasAlpha,
+              bitmap.bitsPerSample == 8,
+              bitmap.isPlanar == false,
+              let data = bitmap.bitmapData else { return nil }
+
+        let width = bitmap.pixelsWide
+        let height = bitmap.pixelsHigh
+        let samples = bitmap.samplesPerPixel
+        let alphaOffset = bitmap.bitmapFormat.contains(.alphaFirst) ? 0 : samples - 1
+        var minX = width
+        var minY = height
+        var maxX = -1
+        var maxY = -1
+
+        for y in 0..<height {
+            let row = data.advanced(by: y * bitmap.bytesPerRow)
+            for x in 0..<width where row[(x * samples) + alphaOffset] > alphaThreshold {
+                minX = min(minX, x)
+                minY = min(minY, y)
+                maxX = max(maxX, x)
+                maxY = max(maxY, y)
+            }
+        }
+
+        guard maxX >= minX, maxY >= minY else { return nil }
+        return CGRect(x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1)
     }
 }
 
