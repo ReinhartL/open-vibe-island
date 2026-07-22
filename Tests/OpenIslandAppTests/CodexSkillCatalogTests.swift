@@ -1,4 +1,6 @@
+import AppKit
 import Foundation
+import SwiftUI
 import Testing
 @testable import OpenIslandApp
 
@@ -114,6 +116,31 @@ struct CodexSkillCatalogTests {
 
         #expect(skill.mention == "$review")
         #expect(skill.initial == "R")
+    }
+
+    @MainActor
+    @Test
+    func copiedSkillTileKeepsItsIntrinsicWidth() {
+        let skill = CodexSkill(
+            name: "long-skill-name-that-wraps",
+            description: "Test skill",
+            fileURL: URL(fileURLWithPath: "/tmp/long-skill/SKILL.md"),
+            source: .user
+        )
+        let idle = NSHostingView(rootView: SkillTile(
+            skill: skill,
+            isHovered: false,
+            isCopied: false,
+            action: {}
+        ))
+        let copied = NSHostingView(rootView: SkillTile(
+            skill: skill,
+            isHovered: false,
+            isCopied: true,
+            action: {}
+        ))
+
+        #expect(abs(idle.fittingSize.width - copied.fittingSize.width) < 0.5)
     }
 
     private func writeSkill(named name: String, description: String, under root: URL) throws {

@@ -231,7 +231,7 @@ struct SkillBrowserView: View {
     }
 }
 
-private struct SkillTile: View {
+struct SkillTile: View {
     let skill: CodexSkill
     let isHovered: Bool
     let isCopied: Bool
@@ -245,7 +245,7 @@ private struct SkillTile: View {
                     .foregroundStyle(isCopied ? .green : .cyan)
                     .frame(width: 20, height: 20)
 
-                Text(isCopied ? "$\(skill.name)" : skill.name)
+                Text(skill.name)
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
