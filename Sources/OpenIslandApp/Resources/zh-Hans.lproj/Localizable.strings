@@ -79,6 +79,7 @@
 "settings.appearance.usageDisplay.compact" = "紧凑";
 "settings.appearance.usageDisplay.animated" = "动画主题";
 "settings.appearance.usageTheme.import" = "导入四帧";
+"settings.appearance.usageTheme.generate" = "使用 AI 生成";
 "settings.appearance.usageTheme.empty" = "导入四张尺寸一致的图片来创建主题。";
 "settings.appearance.usageTheme.ready" = "四个用量阶段已就绪";
 "settings.appearance.stateIndicator.title" = "03 · 会话状态";

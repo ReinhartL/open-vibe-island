@@ -14,6 +14,7 @@ struct AppearanceSettingsPane: View {
     @State private var previewMode: UnifiedBars.Mode = .idle
     @State private var previewAutoCycle: Bool = true
     @State private var usageThemeImportError: String?
+    @State private var showingUsageThemeCreator = false
 
     private static let autoCycleOrder: [UnifiedBars.Mode] = [.idle, .running, .waiting]
     private static let autoCycleInterval: TimeInterval = 2.0
@@ -411,9 +412,15 @@ struct AppearanceSettingsPane: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+                Button(lang.t("settings.appearance.usageTheme.generate")) {
+                    showingUsageThemeCreator = true
+                }
                 Button(lang.t("settings.appearance.usageTheme.import")) {
                     importUsageThemeFrames()
                 }
+            }
+            .sheet(isPresented: $showingUsageThemeCreator) {
+                UsageThemeCreatorView(model: model, profile: editingProfile)
             }
             .padding(12)
             .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 8, style: .continuous))

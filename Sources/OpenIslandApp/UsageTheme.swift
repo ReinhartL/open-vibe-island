@@ -66,8 +66,24 @@ struct UsageThemeStore {
             images.append((url, image))
         }
 
-        guard let size = images.first?.image.pixelSize,
-              images.dropFirst().allSatisfy({ $0.image.pixelSize == size }) else {
+        return try persist(name: name, images: images.map(\.image))
+    }
+
+    func importTheme(name: String, imageData: [Data]) throws -> UsageTheme {
+        guard imageData.count == UsageTheme.frameCount else { throw UsageThemeError.requiresFourImages }
+        let images = try imageData.enumerated().map { index, data in
+            guard data.count <= Self.maximumImageBytes,
+                  let image = NSImage(data: data), image.isValid else {
+                throw UsageThemeError.unreadableImage("frame-\(index + 1)")
+            }
+            return image
+        }
+        return try persist(name: name, images: images)
+    }
+
+    private func persist(name: String, images: [NSImage]) throws -> UsageTheme {
+        guard let size = images.first?.pixelSize,
+              images.dropFirst().allSatisfy({ $0.pixelSize == size }) else {
             throw UsageThemeError.mismatchedDimensions
         }
 
@@ -80,9 +96,9 @@ struct UsageThemeStore {
         let directory = directoryURL(for: theme)
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        for (index, source) in images.enumerated() {
-            guard let png = source.image.pngData else {
-                throw UsageThemeError.unreadableImage(source.url.lastPathComponent)
+        for (index, image) in images.enumerated() {
+            guard let png = image.pngData else {
+                throw UsageThemeError.unreadableImage("frame-\(index + 1)")
             }
             try png.write(to: directory.appendingPathComponent(theme.frames[index]), options: .atomic)
         }

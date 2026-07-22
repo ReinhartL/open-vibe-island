@@ -79,6 +79,7 @@
 "settings.appearance.usageDisplay.compact" = "Compact";
 "settings.appearance.usageDisplay.animated" = "Animated theme";
 "settings.appearance.usageTheme.import" = "Import four frames";
+"settings.appearance.usageTheme.generate" = "Generate with AI";
 "settings.appearance.usageTheme.empty" = "Import four matching images to create a theme.";
 "settings.appearance.usageTheme.ready" = "Four usage stages ready";
 "settings.appearance.stateIndicator.title" = "03 · Session state";

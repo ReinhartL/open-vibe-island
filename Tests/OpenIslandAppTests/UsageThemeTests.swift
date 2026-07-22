@@ -5,6 +5,18 @@ import Testing
 
 struct UsageThemeTests {
     @Test
+    func storyboardRequiresFourStagesAndCharacterRules() {
+        let stage = UsageStoryboard.Stage(usageRange: "0-24", action: "waits", emotion: "eager")
+        let valid = UsageStoryboard(
+            title: "Cookie Crocodile",
+            characterInvariants: ["green crocodile"],
+            stages: [stage, stage, stage, stage]
+        )
+        #expect(valid.isValid)
+        #expect(UsageStoryboard(title: "Invalid", characterInvariants: [], stages: [stage]).isValid == false)
+    }
+
+    @Test
     func mapsUsageToFourNarrativeFrames() {
         let theme = UsageTheme(
             id: UUID(),
