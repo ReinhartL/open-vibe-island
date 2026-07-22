@@ -6,14 +6,41 @@ import Testing
 struct UsageThemeTests {
     @Test
     func storyboardRequiresFourStagesAndCharacterRules() {
-        let stage = UsageStoryboard.Stage(usageRange: "0-24", action: "waits", emotion: "eager")
+        let stages = UsageStoryboard.requiredRanges.map {
+            UsageStoryboard.Stage(usageRange: $0, action: "waits", emotion: "eager")
+        }
         let valid = UsageStoryboard(
             title: "Cookie Crocodile",
             characterInvariants: ["green crocodile"],
-            stages: [stage, stage, stage, stage]
+            stages: stages
         )
         #expect(valid.isValid)
-        #expect(UsageStoryboard(title: "Invalid", characterInvariants: [], stages: [stage]).isValid == false)
+        #expect(UsageStoryboard(title: "Invalid", characterInvariants: [], stages: stages).isValid == false)
+        #expect(UsageStoryboard(title: "Invalid", characterInvariants: ["green crocodile"], stages: stages.reversed()).isValid == false)
+    }
+
+    @Test
+    func decodesStoryboardFromCodexJSONOrMarkdownFence() throws {
+        let json = #"{"title":"Cookie Crocodile","characterInvariants":["green crocodile"],"stages":[{"usageRange":"0-24","action":"waits","emotion":"eager"},{"usageRange":"25-49","action":"nibbles","emotion":"happy"},{"usageRange":"50-74","action":"bites","emotion":"focused"},{"usageRange":"75-100","action":"finishes","emotion":"satisfied"}]}"#
+
+        #expect(UsageThemeGenerator.decodeStoryboard(Data(json.utf8))?.title == "Cookie Crocodile")
+        #expect(UsageThemeGenerator.decodeStoryboard(Data("```json\n\(json)\n```".utf8))?.isValid == true)
+    }
+
+    @Test
+    func codexErrorsRedactKeysAndExplainMissingImageTool() {
+        let raw = "Incorrect API key sk-exampleSECRET123 and image_gen tool is not available"
+        let sanitized = UsageThemeGenerator.sanitize(raw)
+
+        #expect(sanitized.contains("sk-***"))
+        #expect(!sanitized.contains("exampleSECRET123"))
+        #expect(UsageThemeGenerator.imageFailureMessage(from: raw).contains("does not expose"))
+    }
+
+    @Test
+    func shellQuotesPathsWithoutAllowingInterpolation() {
+        #expect(CodexCLIExecutor.shellQuote("/tmp/a b") == "'/tmp/a b'")
+        #expect(CodexCLIExecutor.shellQuote("a'b") == "'a'\\''b'")
     }
 
     @Test

@@ -2,27 +2,31 @@ import AppKit
 import SwiftUI
 
 struct UsageThemeCreatorView: View {
+    private enum CodexStatus: Equatable {
+        case checking
+        case connected
+        case unavailable(String)
+    }
+
     let model: AppModel
     let profile: IslandAppearanceDisplayProfile
     @Environment(\.dismiss) private var dismiss
 
     @State private var description = ""
-    @State private var apiKey = ""
     @State private var referenceImage: Data?
     @State private var storyboard: UsageStoryboard?
+    @State private var codexStatus: CodexStatus = .checking
     @State private var isWorking = false
     @State private var status = ""
     @State private var errorMessage: String?
 
     private let generator = UsageThemeGenerator()
-    private let keyStore = OpenAIAPIKeyStore()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Create Usage Theme").font(.title2.bold())
 
-            SecureField("OpenAI API key", text: $apiKey)
-                .textFieldStyle(.roundedBorder)
+            codexConnectionRow
 
             TextEditor(text: $description)
                 .font(.body)
@@ -31,7 +35,7 @@ struct UsageThemeCreatorView: View {
                 .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 6))
                 .overlay(alignment: .topLeading) {
                     if description.isEmpty {
-                        Text("Describe the character and how the scene changes as usage increases")
+                        Text("Describe the character and how the whole scene changes as usage increases")
                             .foregroundStyle(.secondary).padding(12).allowsHitTesting(false)
                     }
                 }
@@ -42,6 +46,10 @@ struct UsageThemeCreatorView: View {
                 }
                 if referenceImage != nil {
                     Label("Reference ready", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                } else {
+                    Text("No reference image")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -66,16 +74,51 @@ struct UsageThemeCreatorView: View {
                 Spacer()
                 if storyboard == nil {
                     Button("Generate storyboard") { Task { await generateStoryboard() } }
-                        .disabled(isWorking || description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || apiKey.isEmpty)
+                        .disabled(
+                            isWorking ||
+                            description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                            codexStatus != .connected
+                        )
                 } else {
                     Button("Generate four frames") { Task { await generateFrames() } }
-                        .buttonStyle(.borderedProminent).disabled(isWorking)
+                        .buttonStyle(.borderedProminent)
+                        .disabled(isWorking || codexStatus != .connected)
                 }
             }
         }
         .padding(22)
-        .frame(width: 560, height: 480)
-        .onAppear { apiKey = keyStore.load() ?? "" }
+        .frame(width: 580, height: 500)
+        .task { await checkCodexConnection() }
+    }
+
+    @ViewBuilder
+    private var codexConnectionRow: some View {
+        HStack(spacing: 8) {
+            switch codexStatus {
+            case .checking:
+                ProgressView().controlSize(.small)
+                Text("Checking your Codex CLI connection…")
+            case .connected:
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                Text("Using your current Codex CLI account")
+            case .unavailable(let message):
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                Text(message).lineLimit(2)
+                Spacer()
+                Button {
+                    Task { await checkCodexConnection() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.borderless)
+                .help("Check Codex again")
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(codexStatus == .connected ? .primary : .secondary)
+        .padding(.horizontal, 10)
+        .frame(minHeight: 34)
+        .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 6))
     }
 
     private func chooseReferenceImage() {
@@ -87,26 +130,29 @@ struct UsageThemeCreatorView: View {
         catch { errorMessage = error.localizedDescription }
     }
 
+    private func checkCodexConnection() async {
+        codexStatus = .checking
+        do {
+            try await generator.checkCodexConnection()
+            codexStatus = .connected
+        } catch {
+            codexStatus = .unavailable(error.localizedDescription)
+        }
+    }
+
     private func generateStoryboard() async {
-        await perform("Generating four-stage storyboard…") {
-            try keyStore.save(apiKey)
-            storyboard = try await generator.createStoryboard(description: description, apiKey: apiKey)
+        await perform("Asking Codex for a four-stage storyboard…") {
+            storyboard = try await generator.createStoryboard(description: description)
         }
     }
 
     private func generateFrames() async {
         guard let storyboard else { return }
-        await perform("Generating character-consistent frames…") {
-            let reference: Data
-            if let referenceImage {
-                reference = referenceImage
-            } else {
-                reference = try await generator.generateReference(
-                    description: description, storyboard: storyboard, apiKey: apiKey
-                )
-            }
+        await perform("Codex is generating four character-consistent frames…") {
             let frames = try await generator.generateFrames(
-                description: description, storyboard: storyboard, referenceImage: reference, apiKey: apiKey
+                description: description,
+                storyboard: storyboard,
+                referenceImage: referenceImage
             )
             let theme = try UsageThemeStore().importTheme(name: storyboard.title, imageData: frames)
             model.selectedUsageTheme = theme
@@ -117,9 +163,16 @@ struct UsageThemeCreatorView: View {
     }
 
     private func perform(_ message: String, operation: () async throws -> Void) async {
-        isWorking = true; status = message; errorMessage = nil
+        isWorking = true
+        status = message
+        errorMessage = nil
         defer { isWorking = false }
-        do { try await operation(); status = "Ready" }
-        catch { errorMessage = error.localizedDescription; status = "" }
+        do {
+            try await operation()
+            status = "Ready"
+        } catch {
+            errorMessage = error.localizedDescription
+            status = ""
+        }
     }
 }
