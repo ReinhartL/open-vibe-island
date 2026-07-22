@@ -99,6 +99,12 @@ struct OpenIslandApp: App {
             SettingsWindowContent(model: appDelegate.model)
         }
         .windowResizability(.contentMinSize)
+
+        Window("Codex Skills", id: "skills") {
+            SkillBrowserView(model: appDelegate.model)
+        }
+        .windowResizability(.contentMinSize)
+
         .commands {
             CommandGroup(replacing: .appSettings) {
                 Button("Settings…") {
@@ -106,6 +112,14 @@ struct OpenIslandApp: App {
                     appDelegate.model.showSettings()
                 }
                 .keyboardShortcut(",", modifiers: .command)
+            }
+
+            CommandGroup(after: .appSettings) {
+                Button("Browse Codex Skills…") {
+                    openWindow(id: "skills")
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+                .keyboardShortcut("k", modifiers: [.command, .shift])
             }
         }
     }

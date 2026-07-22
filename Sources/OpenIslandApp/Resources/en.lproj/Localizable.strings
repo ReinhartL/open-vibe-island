@@ -230,3 +230,17 @@
 
 /* Window Titles */
 "window.settings" = "Open Island Settings";
+"skills.title" = "Codex Skills";
+"skills.count" = "%d skills";
+"skills.search" = "Search skills";
+"skills.refresh" = "Refresh skills";
+"skills.empty.title" = "No Skills Found";
+"skills.empty.description" = "Add skills to ~/.agents/skills and refresh.";
+"skills.noDescription" = "No description provided.";
+"skills.source.user" = "User skill";
+"skills.source.configured" = "Codex skill";
+"skills.source.plugin" = "Plugin skill";
+"skills.source.legacy" = "Legacy Codex skill";
+"skills.clickToCopy" = "Click a skill to copy its Codex mention.";
+"skills.hoverHint" = "Hover over a skill to see its description.";
+"settings.tab.skills" = "Codex Skills";

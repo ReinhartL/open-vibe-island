@@ -229,3 +229,17 @@
 
 /* Window Titles */
 "window.settings" = "Open Island 設定";
+"skills.title" = "Codex Skills";
+"skills.count" = "%d 個 Skill";
+"skills.search" = "搜尋 Skill";
+"skills.refresh" = "重新整理 Skills";
+"skills.empty.title" = "找不到 Skill";
+"skills.empty.description" = "將 Skill 加入 ~/.agents/skills 後重新整理。";
+"skills.noDescription" = "暫無簡介。";
+"skills.source.user" = "使用者 Skill";
+"skills.source.configured" = "Codex Skill";
+"skills.source.plugin" = "外掛 Skill";
+"skills.source.legacy" = "舊版 Codex Skill";
+"skills.clickToCopy" = "點擊 Skill 即可複製 Codex 引用。";
+"skills.hoverHint" = "將滑鼠停在 Skill 上查看簡介。";
+"settings.tab.skills" = "Codex Skills";

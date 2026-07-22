@@ -12,6 +12,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case appearance
     case watch
     case shortcuts
+    case skills
     case lab
     case about
 
@@ -26,6 +27,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .sound:      lang.t("settings.tab.sound")
         case .watch:      "Watch"
         case .shortcuts:  lang.t("settings.tab.shortcuts")
+        case .skills:     lang.t("settings.tab.skills")
         case .lab:        lang.t("settings.tab.lab")
         case .about:      lang.t("settings.tab.about")
         }
@@ -40,6 +42,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .sound:      "speaker.wave.2.fill"
         case .watch:      "applewatch"
         case .shortcuts:  "keyboard.fill"
+        case .skills:     "sparkles.rectangle.stack.fill"
         case .lab:        "flask.fill"
         case .about:      "info.circle.fill"
         }
@@ -54,6 +57,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .sound:      .green
         case .watch:      .cyan
         case .shortcuts:  .gray
+        case .skills:     .cyan
         case .lab:        .pink
         case .about:      .blue
         }
@@ -62,7 +66,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     var section: SettingsSection {
         switch self {
         case .general, .setup, .display, .sound, .appearance, .watch: .system
-        case .shortcuts, .lab:                                        .advanced
+        case .shortcuts, .skills, .lab:                               .advanced
         case .about:                                                  .app
         }
     }
@@ -150,6 +154,8 @@ struct SettingsView: View {
                 WatchSettingsPane(model: model)
             case .shortcuts:
                 PlaceholderSettingsPane(model: model, titleKey: "settings.tab.shortcuts", subtitleKey: "settings.shortcuts.comingSoon")
+            case .skills:
+                SkillBrowserView(model: model)
             case .lab:
                 PlaceholderSettingsPane(model: model, titleKey: "settings.tab.lab", subtitleKey: "settings.lab.comingSoon")
             case .about:
