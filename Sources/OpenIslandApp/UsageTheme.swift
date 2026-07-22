@@ -41,6 +41,14 @@ enum UsageThemeError: LocalizedError {
 struct UsageThemeStore {
     static let selectedThemeDefaultsKey = "appearance.usageTheme.selectedID"
     static let maximumImageBytes = 10 * 1_024 * 1_024
+    static let builtInDefaultThemeID = UUID(uuidString: "C0C0A111-0000-4000-8000-000000000004")!
+
+    static let builtInDefaultTheme = UsageTheme(
+        id: builtInDefaultThemeID,
+        name: "Crocodile Cookie",
+        frames: (1...UsageTheme.frameCount).map { "frame-\($0).png" },
+        createdAt: Date(timeIntervalSince1970: 0)
+    )
 
     private let fileManager: FileManager
     let rootURL: URL
@@ -110,13 +118,27 @@ struct UsageThemeStore {
     }
 
     func loadTheme(id: UUID) -> UsageTheme? {
+        if id == Self.builtInDefaultThemeID {
+            return Self.builtInDefaultTheme
+        }
         let manifest = rootURL.appendingPathComponent(id.uuidString).appendingPathComponent("manifest.json")
         guard let data = try? Data(contentsOf: manifest) else { return nil }
         return try? JSONDecoder.themeDecoder.decode(UsageTheme.self, from: data)
     }
 
     func imageURL(theme: UsageTheme, frameName: String) -> URL {
-        directoryURL(for: theme).appendingPathComponent(frameName)
+        if theme.id == Self.builtInDefaultThemeID,
+           let bundled = Bundle.module.url(
+            forResource: frameName.replacingOccurrences(of: ".png", with: ""),
+            withExtension: "png",
+            subdirectory: "DefaultUsageTheme"
+           ) ?? Bundle.module.url(
+            forResource: frameName.replacingOccurrences(of: ".png", with: ""),
+            withExtension: "png"
+           ) {
+            return bundled
+        }
+        return directoryURL(for: theme).appendingPathComponent(frameName)
     }
 
     private func directoryURL(for theme: UsageTheme) -> URL {

@@ -69,9 +69,13 @@ final class AppModel {
     let codexAppServer = CodexAppServerCoordinator()
     let updateChecker = UpdateChecker()
     var selectedUsageTheme: UsageTheme? = {
+        let store = UsageThemeStore()
         guard let rawID = UserDefaults.standard.string(forKey: UsageThemeStore.selectedThemeDefaultsKey),
-              let id = UUID(uuidString: rawID) else { return nil }
-        return UsageThemeStore().loadTheme(id: id)
+              let id = UUID(uuidString: rawID),
+              let theme = store.loadTheme(id: id) else {
+            return UsageThemeStore.builtInDefaultTheme
+        }
+        return theme
     }()
 
     var notchStatus: NotchStatus {
@@ -411,6 +415,15 @@ final class AppModel {
         let theme = try UsageThemeStore().importTheme(name: name, imageURLs: imageURLs)
         selectedUsageTheme = theme
         UserDefaults.standard.set(theme.id.uuidString, forKey: UsageThemeStore.selectedThemeDefaultsKey)
+        refreshOverlayPlacementIfVisible()
+    }
+
+    func useBuiltInUsageTheme() {
+        selectedUsageTheme = UsageThemeStore.builtInDefaultTheme
+        UserDefaults.standard.set(
+            UsageThemeStore.builtInDefaultThemeID.uuidString,
+            forKey: UsageThemeStore.selectedThemeDefaultsKey
+        )
         refreshOverlayPlacementIfVisible()
     }
 

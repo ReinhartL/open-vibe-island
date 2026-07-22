@@ -80,6 +80,7 @@
 "settings.appearance.usageDisplay.animated" = "Animated theme";
 "settings.appearance.usageTheme.import" = "Import four frames";
 "settings.appearance.usageTheme.generate" = "Generate with AI";
+"settings.appearance.usageTheme.useDefault" = "Use default";
 "settings.appearance.usageTheme.empty" = "Import four matching images to create a theme.";
 "settings.appearance.usageTheme.ready" = "Four usage stages ready";
 "settings.appearance.usageTheme.importOrder" = "Name files in order before importing: frame-1-0-24.png, frame-2-25-49.png, frame-3-50-74.png, frame-4-75-100.png. Files are sorted by name automatically.";

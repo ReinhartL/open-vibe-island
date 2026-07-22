@@ -78,6 +78,18 @@ struct UsageThemeTests {
     }
 
     @Test
+    func loadsBundledCrocodileAsDefaultTheme() throws {
+        let store = UsageThemeStore()
+        let theme = try #require(store.loadTheme(id: UsageThemeStore.builtInDefaultThemeID))
+
+        #expect(theme == UsageThemeStore.builtInDefaultTheme)
+        #expect(theme.frames.count == UsageTheme.frameCount)
+        for frame in theme.frames {
+            #expect(FileManager.default.fileExists(atPath: store.imageURL(theme: theme, frameName: frame).path))
+        }
+    }
+
+    @Test
     func importsFourMatchingImagesAndReloadsManifest() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("usage-theme-tests-\(UUID().uuidString)")

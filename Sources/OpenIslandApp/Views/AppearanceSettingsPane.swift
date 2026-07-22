@@ -415,6 +415,11 @@ struct AppearanceSettingsPane: View {
                 Button(lang.t("settings.appearance.usageTheme.generate")) {
                     showingUsageThemeCreator = true
                 }
+                if model.selectedUsageTheme?.id != UsageThemeStore.builtInDefaultThemeID {
+                    Button(lang.t("settings.appearance.usageTheme.useDefault")) {
+                        model.useBuiltInUsageTheme()
+                    }
+                }
                 Button(lang.t("settings.appearance.usageTheme.import")) {
                     importUsageThemeFrames()
                 }
