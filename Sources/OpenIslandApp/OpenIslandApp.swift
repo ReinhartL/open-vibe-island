@@ -102,6 +102,7 @@ struct OpenIslandApp: App {
 
         Window("Codex Skills", id: "skills") {
             SkillBrowserView(model: appDelegate.model)
+                .frame(minWidth: 780, idealWidth: 900, minHeight: 540, idealHeight: 640)
         }
         .windowResizability(.contentMinSize)
 

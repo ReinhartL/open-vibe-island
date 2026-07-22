@@ -39,14 +39,16 @@ struct SkillBrowserView: View {
             header
             Divider()
 
-            HSplitView {
+            HStack(spacing: 0) {
                 skillGrid
-                    .frame(minWidth: 500)
+                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .layoutPriority(1)
+                Divider()
                 inspector
-                    .frame(minWidth: 220, idealWidth: 250, maxWidth: 290)
+                    .frame(width: 250)
             }
         }
-        .frame(minWidth: 780, idealWidth: 900, minHeight: 540, idealHeight: 640)
+        .frame(minWidth: 0, minHeight: 540, idealHeight: 640)
         .preferredColorScheme(.dark)
         .onAppear {
             reload()
@@ -58,50 +60,54 @@ struct SkillBrowserView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "sparkles.rectangle.stack.fill")
-                .font(.title2)
-                .foregroundStyle(.cyan)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Image(systemName: "sparkles.rectangle.stack.fill")
+                    .font(.title2)
+                    .foregroundStyle(.cyan)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(lang.t("skills.title"))
-                    .font(.headline)
-                Text(String(format: lang.t("skills.count"), filteredSkills.count))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 20)
-
-            Picker(lang.t("skills.searchMode"), selection: $searchMode) {
-                Text(lang.t("skills.searchMode.prefix")).tag(CodexSkillSearchMode.prefix)
-                Text(lang.t("skills.searchMode.regex")).tag(CodexSkillSearchMode.regularExpression)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 138)
-
-            TextField(
-                searchMode == .prefix ? lang.t("skills.search.prefix") : lang.t("skills.search.regex"),
-                text: $query
-            )
-            .textFieldStyle(.roundedBorder)
-            .focused($searchFocused)
-            .overlay {
-                if !search.isValid {
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.red.opacity(0.85), lineWidth: 1)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(lang.t("skills.title"))
+                        .font(.headline)
+                    Text(String(format: lang.t("skills.count"), filteredSkills.count))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-            }
-            .frame(width: 260)
 
-            Button {
-                reload()
-            } label: {
-                Image(systemName: "arrow.clockwise")
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.borderless)
-            .help(lang.t("skills.refresh"))
+
+            HStack(spacing: 8) {
+                Picker(lang.t("skills.searchMode"), selection: $searchMode) {
+                    Text(lang.t("skills.searchMode.prefix")).tag(CodexSkillSearchMode.prefix)
+                    Text(lang.t("skills.searchMode.regex")).tag(CodexSkillSearchMode.regularExpression)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 138)
+
+                TextField(
+                    searchMode == .prefix ? lang.t("skills.search.prefix") : lang.t("skills.search.regex"),
+                    text: $query
+                )
+                .textFieldStyle(.roundedBorder)
+                .focused($searchFocused)
+                .overlay {
+                    if !search.isValid {
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.red.opacity(0.85), lineWidth: 1)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+
+                Button {
+                    reload()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.borderless)
+                .help(lang.t("skills.refresh"))
+            }
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)

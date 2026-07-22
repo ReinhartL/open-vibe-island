@@ -143,6 +143,16 @@ struct CodexSkillCatalogTests {
         #expect(abs(idle.fittingSize.width - copied.fittingSize.width) < 0.5)
     }
 
+    @MainActor
+    @Test
+    func embeddedSkillBrowserFitsASettingsDetailColumn() {
+        let host = NSHostingView(rootView: SkillBrowserView(model: AppModel()))
+        host.frame = NSRect(x: 0, y: 0, width: 580, height: 560)
+        host.layoutSubtreeIfNeeded()
+
+        #expect(host.fittingSize.width <= 580)
+    }
+
     private func writeSkill(named name: String, description: String, under root: URL) throws {
         let directory = root.appendingPathComponent(name)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
