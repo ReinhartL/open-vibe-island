@@ -90,6 +90,8 @@ cat > "$bundle_dir/Contents/Info.plist" <<EOF
     <string>OpenIslandApp</string>
     <key>CFBundleIconFile</key>
     <string>OpenIsland</string>
+    <key>CFBundleIconName</key>
+    <string>OpenIsland</string>
     <key>CFBundleIdentifier</key>
     <string>$bundle_identifier</string>
     <key>CFBundleInfoDictionaryVersion</key>
@@ -104,6 +106,8 @@ cat > "$bundle_dir/Contents/Info.plist" <<EOF
     <string>$build_number</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>Open Island needs automation access to focus Terminal and iTerm sessions for jump-back.</string>
     <key>NSHighResolutionCapable</key>
