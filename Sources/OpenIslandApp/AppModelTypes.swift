@@ -56,7 +56,7 @@ enum IslandAppearanceDisplayProfile: String, CaseIterable, Identifiable, Sendabl
 struct IslandAppearancePreferences: Equatable, Sendable {
     var rightSlot: IslandRightSlot = .count
     var centerLabel: IslandCenterLabel = .agentAction
-    var usageDisplay: IslandUsageDisplay = .compact
+    var usageDisplay: IslandUsageDisplay = .animated
     var sessionStateIndicator: IslandSessionStateIndicator = .animatedDot
     var sessionGroup: IslandSessionGroup = .none
     var sessionSort: IslandSessionSort = .attention
